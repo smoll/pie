@@ -1,7 +1,6 @@
 from logzero import logger
 from random import randint
 import json
-import re
 import requests
 
 
