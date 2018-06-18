@@ -1,7 +1,7 @@
-from http.cookies import SimpleCookie
 from logzero import logger
 import re
 import requests
+
 
 START_URL = 'https://www.doordash.com/'
 ENDPOINT = 'https://api.doordash.com/v2/store_search/'
@@ -13,7 +13,14 @@ DEFAULT_PARAMS = {
   'extra': 'stores.address',
 }
 
-## init
+# TODO: parameterize
+kwargs = {
+    "lat": 40.68828329999999,
+    "lng": -73.98899849999998,
+}
+
+
+## init csrf token
 
 headers = {
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
@@ -34,7 +41,8 @@ matches = re.findall(r'([^,;\s]*csrf[^=]*)=([^,;\s]+)', cookie_str)
 key, val = matches[0]
 keyval = '%s=%s' % (key, val)
 
-## actual
+
+## actual data
 
 headers = {
     'Cookie': keyval,
@@ -49,12 +57,6 @@ headers = {
     'Cache-Control': 'no-cache',
     'Referer': 'https://www.doordash.com/',
     'Connection': 'keep-alive',
-}
-
-# TODO: parameterize
-kwargs = {
-    "lat": 40.68828329999999,
-    "lng": -73.98899849999998,
 }
 
 params = {**DEFAULT_PARAMS, **kwargs}
