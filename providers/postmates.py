@@ -4,8 +4,8 @@ import re
 import requests
 
 
-START_URL = 'https://postmates.com/_/defaults/location'
-ENDPOINT = 'https://postmates.com/feed'
+START_URL = 'https://postmates.com/_/defaults/location' # POST
+ENDPOINT = 'https://postmates.com/feed' # POST
 COMMON_PARAMS = {
   'client': 'customer.web',
   'version': '3.0.0',

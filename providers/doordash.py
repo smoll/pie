@@ -3,8 +3,8 @@ import re
 import requests
 
 
-START_URL = 'https://www.doordash.com/'
-ENDPOINT = 'https://api.doordash.com/v2/store_search/'
+START_URL = 'https://www.doordash.com/' # GET
+ENDPOINT = 'https://api.doordash.com/v2/store_search/' # GET
 DEFAULT_PARAMS = {
   'offset': 0,
   'limit': 100,
