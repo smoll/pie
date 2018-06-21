@@ -1,5 +1,9 @@
+from contextlib import closing
+from database import dbopen
 from logzero import logger, loglevel
+from pandas.io.json import json_normalize
 from providers import doordash, postmates, seamless, ubereats
+import pandas as pd
 
 loglevel(20)
 
@@ -12,5 +16,30 @@ def searchall(coords):
     seamless.search(**coords)
     ubereats.search(**coords)
 
+# searchall(coords)
+
+response = doordash.search(**coords)
+data = response.json()
+stores = data['stores']
+
+# df = pd.DataFrame(stores)
+
+df = json_normalize(stores)
+
 # import pdb; pdb.set_trace()
-searchall(coords)
+
+logger.info('columns: %s' % (df.columns,))
+
+df.to_csv('doordash.csv')
+
+with dbopen(return_conn=True) as conn:
+    df[['id',
+        'name',
+        'address.lat',
+        'address.lng',
+    ]].to_sql('doordash', conn, if_exists='replace')
+
+with dbopen() as cur:
+    cur.execute("SELECT * FROM doordash")
+    rows = cur.fetchall()
+    logger.info('rows: %s' % (rows,))
