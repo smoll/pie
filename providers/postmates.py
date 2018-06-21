@@ -55,3 +55,4 @@ def search(lat, lng):
     response = requests.post(ENDPOINT, headers=headers, params=COMMON_PARAMS)
     logger.info('fin response=%s' % response)
     logger.debug('fin response.json=%s' % (response.json(),))
+    return response

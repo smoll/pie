@@ -63,3 +63,4 @@ def search(lat, lng):
     response = requests.post('https://www.ubereats.com/rtapi/eats/v1/allstores', headers=headers, params=params, cookies=cookies, data=json.dumps(data))
     logger.info('fin response=%s' % response)
     logger.debug('fin response.json=%s' % (response.json(),))
+    return response
