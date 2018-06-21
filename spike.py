@@ -25,6 +25,7 @@ stores = data['stores']
 # df = pd.DataFrame(stores)
 
 df = json_normalize(stores)
+df.rename(columns=lambda x: x.replace('.', '_'), inplace=True)
 
 # import pdb; pdb.set_trace()
 
@@ -36,27 +37,22 @@ df.to_csv('doordash.csv')
 with dbopen(return_conn=True) as conn:
     df[['id',
         'name',
-        'address.lat',
-        'address.lng',
+        'address_lat',
+        'address_lng',
     ]].to_sql('tmp', conn, if_exists='replace')
 
 # upsert to master table
 with dbopen() as cur:
+    # cur.execute("DROP TABLE doordash;")
+    cur.execute("CREATE TABLE IF NOT EXISTS doordash AS SELECT * FROM tmp WHERE 1=2;")
+    cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_id ON doordash(id);")
     cur.execute("""
-    UPDATE doordash
-    SET
-        (id, name) = (SELECT tmp.id, tmp.name
-                        FROM tmp
-                        WHERE tmp.id = doordash.id )
-    WHERE
-        EXISTS (
-           SELECT *
-           FROM tmp
-           WHERE tmp.id = doordash.id
-    );
+    INSERT OR REPLACE INTO doordash (id, name, address_lat, address_lng)
+    SELECT id, name, address_lat, address_lng FROM tmp;
     """)
     cur.execute("SELECT * FROM doordash;")
     rows = cur.fetchall()
     cols = [description[0] for description in cur.description]
     logger.info('rows: %s' % (rows[:3],))
+    logger.info('count: %s' % (len(rows),))
     logger.info('cols: %s' % (cols,))
