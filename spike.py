@@ -30,11 +30,13 @@ stores = data['stores']
 
 columns_to_drop = [
     'menus',
+    'merchant_promotions',
+    'status_asap_minutes_range',
 ]
 
 df = json_normalize(stores)
-df.drop(columns=columns_to_drop, inplace=True)
 df.rename(columns=lambda x: x.replace('.', '_'), inplace=True)
+df.drop(columns=columns_to_drop, inplace=True)
 
 # import pdb; pdb.set_trace()
 
