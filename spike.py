@@ -28,6 +28,11 @@ def test_columns_seq(df, conn):
     except sqlite3.InterfaceError as e:
         raise RuntimeError('SQL error with column: %s' % col) # probably some nested JSON, discard for now...
 
+def clean():
+    """Clean the DB."""
+    with dbopen() as cur:
+        cur.execute("DROP TABLE doordash;")
+
 def fetch_page(lat, lng, page_info=None, debug_columns=False):
     response = doordash.search(lat, lng, page_info)
     if not response:
@@ -53,11 +58,10 @@ def fetch_page(lat, lng, page_info=None, debug_columns=False):
     with dbopen(return_conn=True) as conn:
         if debug_columns:
             test_columns_seq(df, conn)
-        df.to_sql('tmp', conn, if_exists='replace')
+        df.to_sql('tmp', conn, if_exists='replace', index=False)
 
     ### upsert to master table
     with dbopen() as cur:
-        # cur.execute("DROP TABLE doordash;")
         cur.execute("CREATE TABLE IF NOT EXISTS doordash AS SELECT * FROM tmp WHERE 1=2;")
         cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_id ON doordash(id);")
         cur.execute("""
@@ -82,7 +86,8 @@ def main():
     while more:
         data_or_none = fetch_page(lat, lng, more)
         more = data_or_none
-    logger.info('stopping..')
+    logger.info('stopping.')
 
 if __name__ == '__main__':
+    clean()
     main()
