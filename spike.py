@@ -88,6 +88,17 @@ def fetch_page(lat, lng, page_info=None, debug_columns=False):
 
     return data
 
+def setup():
+    try:
+        with dbopen(return_conn=True) as conn:
+            pd.DataFrame.from_dict({
+                'provider': ['doordash', 'postmates', 'seamless', 'ubereats'],
+                'token1': [None,None,None,None,],
+                'token2': [None,None,None,None,],
+            }).to_sql('tokens', conn, if_exists='fail', index=False)
+    except ValueError as e:
+        logger.debug('tokens table already exists.')
+
 def main():
     logger.info('starting...')
     lat = 40.68828329999999
@@ -100,4 +111,5 @@ def main():
 
 if __name__ == '__main__':
     # clean()
+    setup()
     main()
