@@ -13,7 +13,16 @@ DEFAULT_PARAMS = {
   'extra': 'stores.address',
 }
 
-def search(lat, lng):
+def search(lat, lng, page_info=None):
+    logger.info('searching with kwargs: %s' % (dict(lat=lat, lng=lng, page_info=type(page_info),),))
+
+    params = {'lat': lat, 'lng': lng}
+    if isinstance(page_info, dict):
+        offset = page_info['next_offset']
+        if not offset:
+            return # stop condition
+        params['offset'] = offset
+
     ## init csrf token
     headers = {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
@@ -26,6 +35,7 @@ def search(lat, lng):
     response = requests.get(START_URL, headers=headers)
     logger.info('init response=%s' % response)
     logger.debug('init response.headers=%s' % (response.headers,))
+    response.raise_for_status()
     cookie_str = response.headers['Set-Cookie']
     matches = re.findall(r'([^,;\s]*csrf[^=]*)=([^,;\s]+)', cookie_str)
     key, val = matches[0]
@@ -48,8 +58,8 @@ def search(lat, lng):
         'Connection': 'keep-alive',
     }
 
-    params = {**DEFAULT_PARAMS, **{'lat': lat, 'lng': lng}}
-    response = requests.get(ENDPOINT, headers=headers, params=params)
+    response = requests.get(ENDPOINT, headers=headers, params={**DEFAULT_PARAMS, **params})
     logger.info('fin response=%s' % response)
     logger.debug('fin response.json=%s' % (response.json(),))
+    response.raise_for_status()
     return response
