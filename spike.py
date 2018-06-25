@@ -28,21 +28,15 @@ def test_columns_seq(df, conn):
     except sqlite3.InterfaceError as e:
         raise RuntimeError('SQL error with column: %s' % col) # probably some nested JSON, discard for now...
 
+
 def clean():
     """Clean the DB."""
     with dbopen() as cur:
         cur.execute("DROP TABLE doordash;")
 
-def fetch_page(lat, lng, page_info=None, debug_columns=False):
-    response = doordash.search(lat, lng, page_info)
-    if not response:
-        return # stop condition
-    data = response.json()
+
+def massage_data(data):
     stores = data['stores']
-
-    # df = pd.DataFrame(stores)
-
-    ### clean
     columns_to_drop = [
         'menus',
         'merchant_promotions',
@@ -52,29 +46,45 @@ def fetch_page(lat, lng, page_info=None, debug_columns=False):
     df.rename(columns=lambda x: x.replace('.', '_'), inplace=True)
     df.drop(columns=columns_to_drop, inplace=True)
     logger.debug('columns: %s' % (df.columns,))
-    # df.to_csv('doordash.csv')
+    return df
 
-    ### persist to tmp table
+
+def insert_to_temp_table(df, name, debug):
+    tmp = 'tmp_%s' % name
     with dbopen(return_conn=True) as conn:
-        if debug_columns:
+        if debug:
             test_columns_seq(df, conn)
-        df.to_sql('tmp', conn, if_exists='replace', index=False)
+        df.to_sql(tmp, conn, if_exists='replace', index=False)
 
-    ### upsert to master table
+
+def upsert_to_master_table(df, name):
+    master = name
+    tmp = 'tmp_%s' % name
     with dbopen() as cur:
-        cur.execute("CREATE TABLE IF NOT EXISTS doordash AS SELECT * FROM tmp WHERE 1=2;")
-        cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_id ON doordash(id);")
+        cur.execute("CREATE TABLE IF NOT EXISTS %s AS SELECT * FROM %s WHERE 1=2;" % (master, tmp))
+        cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_id ON %s(id);" % master)
         cur.execute("""
-        INSERT OR REPLACE INTO doordash
-        SELECT * FROM tmp;
-        """)
-        cur.execute("SELECT * FROM doordash;")
+        INSERT OR REPLACE INTO %s
+        SELECT * FROM %s;
+        """ % (master, tmp))
+        cur.execute("SELECT * FROM %s;" % master)
         rows = cur.fetchall()
         cols = [description[0] for description in cur.description]
         logger.debug('first 3 rows: %s' % (rows[:3],))
         logger.debug('cols: %s' % (cols,))
         logger.info('row count: %s' % (len(rows),))
         logger.info('col count: %s' % (len(cols),))
+
+
+def fetch_page(lat, lng, page_info=None, debug_columns=False):
+    response = doordash.search(lat, lng, page_info)
+    if not response:
+        return # stop condition
+    data = response.json()
+
+    df = massage_data(data)
+    insert_to_temp_table(df, 'doordash', debug_columns)
+    upsert_to_master_table(df, 'doordash')
 
     return data
 
@@ -89,5 +99,5 @@ def main():
     logger.info('stopping.')
 
 if __name__ == '__main__':
-    clean()
+    # clean()
     main()
