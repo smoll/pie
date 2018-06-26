@@ -1,5 +1,6 @@
 from database import dbopen
 from logzero import logger
+import sqlite3
 
 class Loader:
     def __init__(self, table, debug=False):
@@ -20,7 +21,7 @@ class Loader:
     def _insert_to_temp_table(self):
         with dbopen(return_conn=True) as conn:
             if self.debug:
-                self._test_columns_seq(df, conn)
+                self._test_columns_seq(conn)
             self.df.to_sql(self.tmp, conn, if_exists='replace', index=False)
 
 
