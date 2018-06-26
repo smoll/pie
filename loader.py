@@ -3,9 +3,10 @@ from logzero import logger
 import sqlite3
 
 class Loader:
-    def __init__(self, table, debug=False):
+    def __init__(self, table, unique_on='id', debug=False):
         self.tmp = 'tmp_%s' % table
         self.master = table
+        self.unique_on = unique_on
         self.debug = debug
 
 
@@ -28,7 +29,7 @@ class Loader:
     def _upsert_to_master_table(self):
         with dbopen() as cur:
             cur.execute("CREATE TABLE IF NOT EXISTS %s AS SELECT * FROM %s WHERE 1=2;" % (self.master, self.tmp))
-            cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_id ON %s(id);" % self.master)
+            cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_id ON %s(%s);" % (self.master, self.unique_on))
             cur.execute("""
             INSERT OR REPLACE INTO %s
             SELECT * FROM %s;
