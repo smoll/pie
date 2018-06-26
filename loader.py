@@ -12,7 +12,7 @@ class Loader:
 
     def load_data(self, df):
         if df is None or df.empty:
-            logger.info('empty DataFrame. doing nothing.')
+            logger.warn('got an empty pandas.DataFrame. doing nothing.')
             return
         self.df = df
         self._insert_to_temp_table()
@@ -30,10 +30,17 @@ class Loader:
         with dbopen() as cur:
             cur.execute("CREATE TABLE IF NOT EXISTS %s AS SELECT * FROM %s WHERE 1=2;" % (self.master, self.tmp))
             cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_id ON %s(%s);" % (self.master, self.unique_on))
-            cur.execute("""
-            INSERT OR REPLACE INTO %s
-            SELECT * FROM %s;
-            """ % (self.master, self.tmp))
+
+            cur.execute(f"SELECT * FROM {self.master} WHERE 1=2;")
+            master_columns = [description[0] for description in cur.description]
+            df_columns = [x for x in self.df.columns if x in master_columns]
+            columns_csv_fmt = ', '.join(df_columns)
+            columns_tuple_fmt = '(%s)' % columns_csv_fmt
+
+            cur.execute(f"""
+            INSERT OR REPLACE INTO {self.master} {columns_tuple_fmt}
+            SELECT {columns_csv_fmt} FROM {self.tmp};
+            """)
             cur.execute("SELECT * FROM %s;" % self.master)
             rows = cur.fetchall()
             cols = [description[0] for description in cur.description]

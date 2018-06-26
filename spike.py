@@ -22,10 +22,11 @@ PROVIDERS = [
 def clean():
     """Clean the DB."""
     with dbopen() as cur:
-        cur.execute("DROP TABLE doordash;")
+        for p in PROVIDERS:
+            cur.execute("DROP TABLE IF EXISTS %s;" % p)
 
 
-def fetch_page(lat, lng, page_info=None, debug_columns=False):
+def fetch_page(lat, lng, page_info=None):
     provider_name = PROVIDERS[0]
     class_name = ''.join(x.capitalize() for x in provider_name.split('_'))
 
