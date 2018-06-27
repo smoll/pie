@@ -1,58 +1,48 @@
+from crawler import crawl
+from config import PROVIDERS
+
 from contextlib import closing
 from database import dbopen
 from logzero import logger, loglevel
-from pandas.io.json import json_normalize
-from providers import doordash, postmates, seamless, ubereats
+from time import time
+import os
 import pandas as pd
 
-loglevel(20)
+debug_on = os.getenv('DEBUG') in ['true', '1', 't', 'y']
+ll_str = '10' if debug_on else os.getenv('LOG_LEVEL', '20')
+loglevel(int(ll_str))
 
-coords = dict(lat=40.68828329999999, lng=-73.98899849999998)
 
-def searchall(coords):
-    """Search all sequentially."""
-    doordash.search(**coords)
-    postmates.search(**coords)
-    seamless.search(**coords)
-    ubereats.search(**coords)
+def clean():
+    """Clean the DB."""
+    with dbopen() as cur:
+        for p in PROVIDERS:
+            cur.execute("DROP TABLE IF EXISTS %s;" % p)
 
-# searchall(coords)
 
-response = doordash.search(**coords)
-data = response.json()
-stores = data['stores']
+def setup():
+    try:
+        with dbopen(return_conn=True) as conn:
+            empty_row = [None for p in PROVIDERS]
+            pd.DataFrame.from_dict({
+                'provider': PROVIDERS,
+                'token1': empty_row,
+                'token2': empty_row,
+            }).to_sql('tokens', conn, if_exists='fail', index=False)
+    except ValueError as e:
+        logger.debug('tokens table already exists.')
 
-# df = pd.DataFrame(stores)
 
-df = json_normalize(stores)
-df.rename(columns=lambda x: x.replace('.', '_'), inplace=True)
+def main():
+    ts = time()
+    lat = 40.68828329999999
+    lng = -73.98899849999998
+    logger.info('started...')
+    crawl(lat, lng)
+    logger.info('stopped.')
+    logger.info(f'took {time() - ts}s')
 
-# import pdb; pdb.set_trace()
-
-logger.info('columns: %s' % (df.columns,))
-
-df.to_csv('doordash.csv')
-
-# persist to tmp table
-with dbopen(return_conn=True) as conn:
-    df[['id',
-        'name',
-        'address_lat',
-        'address_lng',
-    ]].to_sql('tmp', conn, if_exists='replace')
-
-# upsert to master table
-with dbopen() as cur:
-    # cur.execute("DROP TABLE doordash;")
-    cur.execute("CREATE TABLE IF NOT EXISTS doordash AS SELECT * FROM tmp WHERE 1=2;")
-    cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_id ON doordash(id);")
-    cur.execute("""
-    INSERT OR REPLACE INTO doordash (id, name, address_lat, address_lng)
-    SELECT id, name, address_lat, address_lng FROM tmp;
-    """)
-    cur.execute("SELECT * FROM doordash;")
-    rows = cur.fetchall()
-    cols = [description[0] for description in cur.description]
-    logger.info('rows: %s' % (rows[:3],))
-    logger.info('count: %s' % (len(rows),))
-    logger.info('cols: %s' % (cols,))
+if __name__ == '__main__':
+    # clean()
+    setup()
+    main()
