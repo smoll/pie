@@ -17,7 +17,7 @@ class UberEats:
         self.response = None
         self.data = None
         self.more = None
-        self.loader = Loader(self.SHORTNAME, 'id')
+        self.loader = Loader(self.SHORTNAME, 'uuid')
 
     def _reset_tokens(self):
         logger.info('getting a brand new set of tokens!')

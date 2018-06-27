@@ -34,7 +34,7 @@ class Seamless:
         self.response = None
         self.data = None
         self.more = None
-        self.loader = Loader(self.SHORTNAME, 'id')
+        self.loader = Loader(self.SHORTNAME, 'uid')
 
 
     def _reset_token(self):

@@ -23,7 +23,7 @@ class DoorDash:
         self.response = None
         self.data = None
         self.more = None
-        self.loader = Loader(table=self.SHORTNAME)
+        self.loader = Loader(self.SHORTNAME, 'id')
 
 
     def search(self, lat, lng, more={}):
