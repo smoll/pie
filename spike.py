@@ -1,6 +1,7 @@
 from contextlib import closing
 from database import dbopen
 from logzero import logger, loglevel
+from time import time
 import importlib
 import os
 import pandas as pd
@@ -54,12 +55,13 @@ def setup():
 
 
 def main():
-    logger.info('starting...')
+    ts = time()
     lat = 40.68828329999999
     lng = -73.98899849999998
+    logger.info('started...')
     crawl(lat, lng)
-    logger.info('stopping.')
-
+    logger.info('stopped.')
+    logger.info(f'took {time() - ts}s')
 
 if __name__ == '__main__':
     # clean()
