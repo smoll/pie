@@ -27,7 +27,7 @@ def clean():
 
 
 def fetch_page(lat, lng, more=None):
-    provider_name = PROVIDERS[2]
+    provider_name = PROVIDERS[-1]
     class_name = ''.join(x.capitalize() for x in provider_name.split('_'))
 
     logger.info('Searching via provider %s...' % provider_name)
