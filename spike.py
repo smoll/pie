@@ -26,17 +26,18 @@ def clean():
             cur.execute("DROP TABLE IF EXISTS %s;" % p)
 
 
-def fetch_page(lat, lng, more=None):
-    provider_name = PROVIDERS[-1]
-    class_name = ''.join(x.capitalize() for x in provider_name.split('_'))
+def crawl(lat, lng):
+    for provider_name in PROVIDERS:
+        logger.info('Searching via provider %s...' % provider_name)
+        class_name = ''.join(x.capitalize() for x in provider_name.split('_'))
+        Provider = getattr(importlib.import_module("providers.%s" % provider_name), class_name)
+        provider = Provider()
+        more = {}
 
-    logger.info('Searching via provider %s...' % provider_name)
-    Provider = getattr(importlib.import_module("providers.%s" % provider_name), class_name)
-    provider = Provider()
-    provider.search(lat, lng, more)
-    provider.save_data()
-
-    return provider.more
+        while more is not None:
+            provider.search(lat, lng, more)
+            provider.save_data()
+            more = provider.more
 
 
 def setup():
@@ -56,9 +57,7 @@ def main():
     logger.info('starting...')
     lat = 40.68828329999999
     lng = -73.98899849999998
-    more = {}
-    while more is not None:
-        more = fetch_page(lat, lng, more)
+    crawl(lat, lng)
     logger.info('stopping.')
 
 
