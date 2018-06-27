@@ -26,7 +26,11 @@ class DoorDash:
         self.loader = Loader(table=self.SHORTNAME)
 
 
-    def search(self, lat, lng, more=None):
+    def search(self, lat, lng, more={}):
+        """
+        Search a given (lat, lng).
+        If more is None, do nothing.
+        """
         logger.info('searching with kwargs: %s' % (dict(lat=lat, lng=lng, more=type(more),),))
 
         if more is None:
@@ -59,7 +63,6 @@ class DoorDash:
         }
         response = requests.get(self.ENDPOINT, headers=headers, params={**self.DEFAULT_PARAMS, **params})
         logger.info('fin response=%s' % response)
-        logger.debug('fin response.json=%s' % (response.json(),))
 
         if not response.ok:
             token1, token2 = self._reset_tokens()
@@ -67,8 +70,9 @@ class DoorDash:
             headers['X-CSRFToken'] = token2
             response = requests.get(self.ENDPOINT, headers=headers, params={**self.DEFAULT_PARAMS, **params})
             logger.info('retried fin response=%s' % response)
-            logger.debug('retried fin response.json=%s' % (response.json(),))
             response.raise_for_status()
+
+        logger.debug('retried fin response.json=%s' % (response.json(),))
 
         self.response = response
         self.data = response.json()

@@ -26,13 +26,14 @@ def clean():
             cur.execute("DROP TABLE IF EXISTS %s;" % p)
 
 
-def fetch_page(lat, lng, page_info=None):
-    provider_name = PROVIDERS[1]
+def fetch_page(lat, lng, more=None):
+    provider_name = PROVIDERS[2]
     class_name = ''.join(x.capitalize() for x in provider_name.split('_'))
 
+    logger.info('Searching via provider %s...' % provider_name)
     Provider = getattr(importlib.import_module("providers.%s" % provider_name), class_name)
     provider = Provider()
-    provider.search(lat, lng, page_info)
+    provider.search(lat, lng, more)
     provider.save_data()
 
     return provider.more

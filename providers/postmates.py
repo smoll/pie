@@ -25,7 +25,7 @@ class Postmates:
 
     def search(self, lat, lng, more={}):
         """
-        Search a given (lat, lng) and set self.data to the decoded response data.
+        Search a given (lat, lng).
         If more is None, do nothing.
         """
         logger.info('searching with kwargs: %s' % (dict(lat=lat, lng=lng, more=type(more),),))
