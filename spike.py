@@ -1,23 +1,16 @@
+from crawler import crawl
+from config import PROVIDERS
+
 from contextlib import closing
 from database import dbopen
 from logzero import logger, loglevel
 from time import time
-import importlib
 import os
 import pandas as pd
-import sqlite3
 
 debug_on = os.getenv('DEBUG') in ['true', '1', 't', 'y']
 ll_str = '10' if debug_on else os.getenv('LOG_LEVEL', '20')
 loglevel(int(ll_str))
-
-
-PROVIDERS = [
-    'door_dash',
-    'postmates',
-    'seamless',
-    'uber_eats',
-]
 
 
 def clean():
@@ -25,20 +18,6 @@ def clean():
     with dbopen() as cur:
         for p in PROVIDERS:
             cur.execute("DROP TABLE IF EXISTS %s;" % p)
-
-
-def crawl(lat, lng):
-    for provider_name in PROVIDERS:
-        logger.info('Searching via provider %s...' % provider_name)
-        class_name = ''.join(x.capitalize() for x in provider_name.split('_'))
-        Provider = getattr(importlib.import_module("providers.%s" % provider_name), class_name)
-        provider = Provider()
-        more = {}
-
-        while more is not None:
-            provider.search(lat, lng, more)
-            provider.save_data()
-            more = provider.more
 
 
 def setup():
