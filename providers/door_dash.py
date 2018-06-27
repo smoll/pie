@@ -22,20 +22,23 @@ class DoorDash:
     def __init__(self):
         self.response = None
         self.data = None
+        self.more = None
         self.loader = Loader(table=self.SHORTNAME)
 
 
-    def search(self, lat, lng, page_info=None):
-        logger.info('searching with kwargs: %s' % (dict(lat=lat, lng=lng, page_info=type(page_info),),))
+    def search(self, lat, lng, more=None):
+        logger.info('searching with kwargs: %s' % (dict(lat=lat, lng=lng, more=type(more),),))
+
+        if more is None:
+            self.response = None
+            self.data = None
+            self.more = None
+            logger.warn('nothing left to do!')
+            return
 
         params = {'lat': lat, 'lng': lng}
-        if isinstance(page_info, dict):
-            offset = page_info['next_offset']
-            if not offset:
-                # stop condition
-                self.response = None
-                self.data = None
-                return
+        offset = more.get('next_offset')
+        if offset:
             params['offset'] = offset
 
         token1, token2 = self._get_tokens()
@@ -69,6 +72,8 @@ class DoorDash:
 
         self.response = response
         self.data = response.json()
+        next_offset = self.data.get('next_offset')
+        self.more = {'next_offset': next_offset} if next_offset else None
         return response
 
 

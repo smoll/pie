@@ -27,7 +27,7 @@ def clean():
 
 
 def fetch_page(lat, lng, page_info=None):
-    provider_name = PROVIDERS[0]
+    provider_name = PROVIDERS[1]
     class_name = ''.join(x.capitalize() for x in provider_name.split('_'))
 
     Provider = getattr(importlib.import_module("providers.%s" % provider_name), class_name)
@@ -35,7 +35,7 @@ def fetch_page(lat, lng, page_info=None):
     provider.search(lat, lng, page_info)
     provider.save_data()
 
-    return provider.data
+    return provider.more
 
 
 def setup():
@@ -55,10 +55,9 @@ def main():
     logger.info('starting...')
     lat = 40.68828329999999
     lng = -73.98899849999998
-    more = True
-    while more:
-        data_or_none = fetch_page(lat, lng, more)
-        more = data_or_none
+    more = {}
+    while more is not None:
+        more = fetch_page(lat, lng, more)
     logger.info('stopping.')
 
 

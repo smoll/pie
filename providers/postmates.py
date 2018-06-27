@@ -19,31 +19,30 @@ class Postmates:
     def __init__(self):
         self.response = None
         self.data = None
+        self.more = None
         self.loader = Loader(self.SHORTNAME, 'uuid')
 
 
-    def search(self, lat, lng, page_info=None):
+    def search(self, lat, lng, more={}):
         """
         Search a given (lat, lng) and set self.data to the decoded response data.
-        If page_info indicates there is no more data to fetch, do nothing.
+        If more is None, do nothing.
         """
-        logger.info('searching with kwargs: %s' % (dict(lat=lat, lng=lng, page_info=type(page_info),),))
+        logger.info('searching with kwargs: %s' % (dict(lat=lat, lng=lng, more=type(more),),))
+
+        if more is None:
+            self.response = None
+            self.data = None
+            self.more = None
+            logger.warn('nothing left to do!')
+            return
 
         req_data = {
             'fulfillment_type': 'delivery',
-            'page': 1,
+            'page': int(more.get('page', 1)),
         }
-        if isinstance(page_info, dict):
-            if page_info['has_more']:
-                req_data['page'] += 1
-            else:
-                # stop condition
-                self.response = None
-                self.data = None
-                return
-
         # import pdb; pdb.set_trace()
-        logger.warn('req_data: %s' % (req_data,))
+        logger.info('req_data: %s' % (req_data,))
 
         ## init location
         data = json.dumps({'lat': lat, 'lng': lng})
@@ -91,6 +90,7 @@ class Postmates:
 
         self.response = response
         self.data = response.json()
+        self.more = {'page': req_data['page'] + 1} if self.data.get('has_more') else None
         return response
 
 
@@ -104,9 +104,11 @@ class Postmates:
             'media_header_img_resolutions',
             'media_icon_img_resolutions',
             'primary_place_category_header_img_resolutions',
+            'badges',
+            'place_meta_polys',
         ]
         df = json_normalize(stores)
         df.rename(columns=lambda x: x.replace('.', '_'), inplace=True)
-        df.drop(columns=columns_to_drop, inplace=True)
-        logger.info('columns: %s' % (df.columns,))
+        df.drop(columns=[c for c in columns_to_drop if c in df.columns], inplace=True)
+        logger.debug('columns: %s' % (df.columns,))
         self.loader.load_data(df)
