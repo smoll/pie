@@ -17,7 +17,7 @@ pre: env
 	. env/bin/activate; python batch/pre.py
 
 start: env
-	. env/bin/activate; python batch/start.py
+	. env/bin/activate; python batch/serial.py
 
 clean:
 	rm -rf env
