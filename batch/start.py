@@ -1,9 +1,15 @@
 # Start batch processing, storing progress in outputs/progress.csv
 
-from logzero import logger
+from logzero import logger, loglevel
 from queue import Queue
 from threading import Thread
 import pandas as pd
+import os
+
+
+debug_on = os.getenv('DEBUG') in ['true', '1', 't', 'y']
+ll_str = '10' if debug_on else os.getenv('LOG_LEVEL', '20')
+loglevel(int(ll_str))
 
 
 def main():
