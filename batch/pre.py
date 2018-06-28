@@ -2,6 +2,7 @@
 
 from logzero import logger
 from pathlib import Path
+import glob
 import pandas as pd
 import pandas.api.types as ptypes
 
@@ -13,7 +14,8 @@ df_zips = pd.read_csv('./inputs/zip_coords.csv')
 df_zips.rename(columns=lambda x: x.lower(), inplace=True)
 df = None
 
-pathlist = Path('./csvs').glob('**/*.csv')
+pathlist = glob.glob('./csvs/**/*.csv', recursive=True)
+assert len(pathlist) > 0, "No csv files found in ./csvs dir!"
 for path in pathlist:
     # because path is object not string
     path_str = str(path)
