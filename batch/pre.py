@@ -37,6 +37,6 @@ df['progress'] = 0
 logger.info('head:\n%s' % (df.head(),))
 logger.info('types:\n%s' % (df.dtypes,))
 
-df.to_csv('./outputs/progress.csv')
+df.to_csv('./outputs/progress.csv', index=False)
 
 # import pdb; pdb.set_trace()
