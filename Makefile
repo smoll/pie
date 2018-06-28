@@ -10,6 +10,9 @@ env/bin/activate: requirements.txt
 spike: env
 	. env/bin/activate; python spike.py
 
+debug: env
+	. env/bin/activate; python crawler.py
+
 pre: env
 	. env/bin/activate; python batch/pre.py
 
