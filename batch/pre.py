@@ -6,6 +6,14 @@ import glob
 import pandas as pd
 import pandas.api.types as ptypes
 
+if __package__ is None:
+    import sys
+    from os import path
+    sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
+    from database import dbopen, setup
+else:
+    from ..database import dbopen, setup
+
 # Make outputs dir
 Path('./outputs').mkdir(parents=True, exist_ok=True)
 
@@ -37,6 +45,16 @@ df['progress'] = 0
 logger.info('head:\n%s' % (df.head(),))
 logger.info('types:\n%s' % (df.dtypes,))
 
-df.to_csv('./outputs/progress.csv', index=False)
+setup()
+
+with dbopen() as cur:
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS progress (lat REAL, lng REAL, progress INT,
+    UNIQUE(lat, lng)
+    ON CONFLICT IGNORE);
+    """)
+
+with dbopen(return_conn=True) as conn:
+    df.to_sql('progress', conn, if_exists='append', index=False)
 
 # import pdb; pdb.set_trace()
