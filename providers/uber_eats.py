@@ -143,6 +143,7 @@ class UberEats:
             return
         columns_to_drop = [
             'payload_storePayload_stateMapDisplayInfo_available_heroImage_items',
+            'payload_storePayload_stateMapDisplayInfo_surge_heroImage_items',
         ]
         df = json_normalize(stores)
         df.rename(columns=lambda x: x.replace('.', '_'), inplace=True)
