@@ -13,7 +13,7 @@ class Loader:
 
     def load_data(self, df):
         if df is None or df.empty:
-            logger.warn('got an empty pandas.DataFrame. doing nothing.')
+            logger.error('got an empty pandas.DataFrame. doing nothing.')
             return
         self.df = df
         self._insert_to_temp_table()

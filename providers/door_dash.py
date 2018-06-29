@@ -84,6 +84,9 @@ class DoorDash:
     def save_data(self):
         if self.data is None:
             return
+        elif 'stores' not in self.data:
+            logger.warn('zero results from door_dash query.')
+            return
         stores = self.data['stores']
         columns_to_drop = [
             'menus',

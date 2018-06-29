@@ -177,6 +177,9 @@ class Seamless:
         if self.data is None:
             return
         stores = self.data['search_result']['results']
+        if len(stores) == 0:
+            logger.warn('zero results from seamless query.')
+            return
         columns_to_drop = [
             'badge_list',
             'faceted_rating_data_faceted_rating_list',
