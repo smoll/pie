@@ -138,6 +138,9 @@ class UberEats:
             logger.warn('zero results from uber_eats query.')
             return
         stores = self.data['feed']['feedItems']
+        if len(stores) == 0:
+            logger.warn('zero results from uber_eats query.')
+            return
         columns_to_drop = [
             'payload_storePayload_stateMapDisplayInfo_available_heroImage_items',
         ]

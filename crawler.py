@@ -56,7 +56,8 @@ def debug():
     # fetch_all('postmates', 34.424366, -117.161295)
     # fetch_all('uber_eats', 34.424366, -117.161295)
     # fetch_all('seamless', 34.02452, -117.28925500000001)
-    fetch_all('door_dash', 34.650628999999995, -117.321326)
+    # fetch_all('door_dash', 34.650628999999995, -117.321326)
+    fetch_all('uber_eats', 34.172754, -117.521243)
 
 if __name__ == '__main__':
     from database import setup
