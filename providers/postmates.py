@@ -90,12 +90,16 @@ class Postmates:
 
         self.response = response
         self.data = response.json()
-        self.more = {'page': req_data['page'] + 1} if self.data.get('has_more') else None
+        has_more = True if self.data.get('has_more') and 'items' in self.data else False
+        self.more = {'page': req_data['page'] + 1} if has_more else None
         return response
 
 
     def save_data(self):
         if self.data is None:
+            return
+        elif 'items' not in self.data:
+            logger.warn('zero results from postmates query.')
             return
         stores = self.data['items']
         columns_to_drop = [

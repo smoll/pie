@@ -125,7 +125,7 @@ class UberEats:
 
         self.response = response
         self.data = response.json()
-        items = len(self.data['feed']['feedItems'])
+        items = len(self.data['feed']['feedItems']) if 'feedItems' in self.data['feed'] else 0
         self.more = {'offset': offset + items} if items else None
 
         return response
@@ -134,9 +134,16 @@ class UberEats:
     def save_data(self):
         if self.data is None:
             return
+        elif 'feedItems' not in self.data['feed']:
+            logger.warn('zero results from uber_eats query.')
+            return
         stores = self.data['feed']['feedItems']
+        if len(stores) == 0:
+            logger.warn('zero results from uber_eats query.')
+            return
         columns_to_drop = [
             'payload_storePayload_stateMapDisplayInfo_available_heroImage_items',
+            'payload_storePayload_stateMapDisplayInfo_surge_heroImage_items',
         ]
         df = json_normalize(stores)
         df.rename(columns=lambda x: x.replace('.', '_'), inplace=True)

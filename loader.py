@@ -1,10 +1,11 @@
 from database import dbopen
 from logzero import logger
+import shortuuid
 import sqlite3
 
 class Loader:
     def __init__(self, table, unique_on, debug=False):
-        self.tmp = 'tmp_%s' % table
+        self.tmp = 'tmp_%s_%s' % (table, shortuuid.uuid(),)
         self.master = table
         self.unique_on = unique_on
         self.debug = debug
@@ -12,11 +13,12 @@ class Loader:
 
     def load_data(self, df):
         if df is None or df.empty:
-            logger.warn('got an empty pandas.DataFrame. doing nothing.')
+            logger.error('got an empty pandas.DataFrame. doing nothing.')
             return
         self.df = df
         self._insert_to_temp_table()
         self._upsert_to_master_table()
+        self._clean_temp_table()
 
 
     def _insert_to_temp_table(self):
@@ -48,6 +50,11 @@ class Loader:
             logger.debug('cols: %s' % (cols,))
             logger.info('row count: %s' % (len(rows),))
             logger.info('col count: %s' % (len(cols),))
+
+
+    def _clean_temp_table(self):
+        with dbopen() as cur:
+            cur.execute(f"DROP TABLE IF EXISTS {self.tmp};")
 
 
     def _test_columns_seq(self, conn):

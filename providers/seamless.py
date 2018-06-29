@@ -5,6 +5,7 @@ from pandas.io.json import json_normalize
 from random import randint
 import json
 import requests
+import time
 
 def _digits(n):
     range_start = 10**(n-1)
@@ -37,6 +38,34 @@ class Seamless:
         self.loader = Loader(self.SHORTNAME, 'uid')
 
 
+    def _save_auth(self, auth):
+        serialized = json.dumps(auth)
+        with dbopen() as cur:
+            query = f"""
+            UPDATE tokens
+            SET token1 = ?
+            WHERE provider = '{self.SHORTNAME}';
+            """
+            cur.execute(query, [serialized])
+
+
+    def _refresh_token(self, token):
+        logger.info('refreshing OLD token...')
+        payload = {
+            "brand": "SEAMLESS",
+            "client_id": "beta_seamless_ayNyuFxxVQYefSAhFYCryvXBPQc",
+            "device_id": _digits(10),
+            "refresh_token": token
+        }
+        data = json.dumps(payload)
+        response = requests.post(self.START_URL, headers=self.DEFAULT_HEADERS, data=data)
+
+        auth = response.json()
+        self._save_auth(auth)
+
+        return auth['session_handle']['access_token']
+
+
     def _reset_token(self):
         logger.info('getting a brand new set of tokens!')
         ## init access token
@@ -50,29 +79,37 @@ class Seamless:
         response = requests.post(self.START_URL, headers=self.DEFAULT_HEADERS, data=data)
         logger.info('init response=%s' % response)
         logger.debug('init response.headers=%s' % (response.headers,))
-        token = response.json()['session_handle']['access_token']
+        # import pdb; pdb.set_trace()
 
-        with dbopen() as cur:
-            query = f"""
-            UPDATE tokens
-            SET token1 = ?
-            WHERE provider = '{self.SHORTNAME}';
-            """
-            cur.execute(query, [token])
+        auth = response.json()
+        self._save_auth(auth)
 
-        return token
+        return auth['session_handle']['access_token']
 
 
     def _get_token(self):
         """Init csrf token."""
         with dbopen() as cur:
             cur.execute("SELECT token1 FROM tokens WHERE provider = '%s';" % self.SHORTNAME)
-            token = cur.fetchone()[0]
+            serialized_auth = cur.fetchone()[0]
 
-            if not token:
+            if not serialized_auth:
                 return self._reset_token()
 
-            return token
+            auth = json.loads(serialized_auth)
+            now = int(round(time.time() * 1000))
+            refresh_expiry = auth['session_handle']['refresh_token_expire_time']
+            token_expiry = auth['session_handle']['token_expire_time']
+
+            assert refresh_expiry > token_expiry, "Token expiry happens after refresh expiry! The logic below may be incorrect."
+
+            if now > refresh_expiry:
+                return self._reset_token()
+            elif now > token_expiry:
+                token = auth['session_handle']['refresh_token']
+                return self._refresh_token(token)
+
+            return auth['session_handle']['access_token']
 
 
     def search(self, lat, lng, more={}):
@@ -140,6 +177,9 @@ class Seamless:
         if self.data is None:
             return
         stores = self.data['search_result']['results']
+        if len(stores) == 0:
+            logger.warn('zero results from seamless query.')
+            return
         columns_to_drop = [
             'badge_list',
             'faceted_rating_data_faceted_rating_list',

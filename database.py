@@ -1,4 +1,19 @@
+from config import PROVIDERS
+from logzero import logger
+import pandas as pd
 import sqlite3
+
+def setup():
+    try:
+        with dbopen(return_conn=True) as conn:
+            empty_row = [None for p in PROVIDERS]
+            pd.DataFrame.from_dict({
+                'provider': PROVIDERS,
+                'token1': empty_row,
+                'token2': empty_row,
+            }).to_sql('tokens', conn, if_exists='fail', index=False)
+    except ValueError as e:
+        logger.debug('tokens table already exists.')
 
 class dbopen(object):
     """

@@ -82,7 +82,8 @@ class DoorDash:
 
 
     def save_data(self):
-        if self.data is None:
+        if not self.data.get('stores'):
+            logger.warn('zero results from door_dash query.')
             return
         stores = self.data['stores']
         columns_to_drop = [
@@ -92,7 +93,7 @@ class DoorDash:
         ]
         df = json_normalize(stores)
         df.rename(columns=lambda x: x.replace('.', '_'), inplace=True)
-        df.drop(columns=columns_to_drop, inplace=True)
+        df.drop(columns=[c for c in columns_to_drop if c in df.columns], inplace=True)
         logger.debug('columns: %s' % (df.columns,))
         self.loader.load_data(df)
 
