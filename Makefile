@@ -19,6 +19,12 @@ pre: env
 start: env
 	. env/bin/activate; python batch/serial.py
 
+post: env
+	. env/bin/activate; python batch/post.py
+
+stats: env
+	. env/bin/activate; python stats.py
+
 clean:
 	rm -rf env
 	find -iname "*.pyc" -delete

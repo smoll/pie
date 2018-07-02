@@ -21,3 +21,15 @@ To start iterating through all `(lat, lng)` coordinates in the `progress` table,
 ```
 $ make start
 ```
+
+To get current stats from the sqlite DB:
+
+```
+$ make stats
+```
+
+To export all results from DB to .csv files:
+
+```
+$ make post
+```

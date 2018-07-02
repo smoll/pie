@@ -14,9 +14,6 @@ if __package__ is None:
 else:
     from ..database import dbopen, setup
 
-# Make outputs dir
-Path('./outputs').mkdir(parents=True, exist_ok=True)
-
 # From https://gist.github.com/erichurst/7882666
 df_zips = pd.read_csv('./inputs/zip_coords.csv')
 df_zips.rename(columns=lambda x: x.lower(), inplace=True)
