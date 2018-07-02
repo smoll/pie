@@ -10,9 +10,6 @@ ll_str = '10' if debug_on else os.getenv('LOG_LEVEL', '20')
 loglevel(int(ll_str))
 
 
-PROGRESS_FILE = './outputs/progress.csv'
-
-
 def main():
     with dbopen(return_conn=True) as conn:
         df = pd.read_sql('SELECT * FROM progress WHERE progress = 0;', conn)

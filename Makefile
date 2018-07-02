@@ -19,6 +19,9 @@ pre: env
 start: env
 	. env/bin/activate; python batch/serial.py
 
+post: env
+	. env/bin/activate; python batch/post.py
+
 stats: env
 	. env/bin/activate; python stats.py
 
